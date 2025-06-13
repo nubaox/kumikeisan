@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>組順使用日時計算シール</title>
+    <style>
+        /* スタイル部分は変更なし（元のCSSをそのまま保持） */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e2e8f0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tab-container {
+            display: flex;
+            background: rgba(45, 55, 72, 0.8);
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 20px;
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .tab-button.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            background: rgba(51, 65, 85, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .input-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+            background: rgba(51, 65, 85, 0.9);
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(30, 41, 59, 1);
+        }
+        
+        .use-now-btn {
+            padding: 8px 12px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            width: 100%;
+        }
+        
+        .use-now-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            accent-color: #3b82f6;
+        }
+        
+        .line-selector {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .line-selector h3 {
+            color: #06b6d4;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .production-section {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .production-section h3 {
+            color: #10b981;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .break-section {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .break-section h3 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .break-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .break-group {
+            background: rgba(51, 65, 85, 0.7);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-left: 4px solid #f59e0b;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .break-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            background: rgba(51, 65, 85, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .calendar-section {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .calendar-section h3 {
+            color: #8b5cf6;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        .line-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .line-tab {
+            padding: 10px 20px;
+            background: rgba(51, 65, 85, 0.7);
+            border: 2px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .line-tab:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .line-tab.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .month-container {
+            margin-bottom: 40px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .month-header {
+            text-align: center;
+            color: #8b5cf6;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-header {
+            background: rgba(59, 130, 246, 0.2);
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 8px;
+            color: #3b82f6;
+            font-size: 0.9em;
+        }
+        
+        .calendar-day {
+            background: rgba(51, 65, 85, 0.7);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .calendar-day.weekend {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .calendar-day.today {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        .calendar-day .date {
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 0.8em;
+        }
+        
+        .calendar-day input {
+            width: 100%;
+            padding: 4px;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 4px;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            font-size: 0.8em;
+            text-align: center;
+        }
+        
+        .calendar-day input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+        
+        .result-section {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            border: 1px solid rgba(5, 150, 105, 0.3);
+        }
+        
+        .result-section.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .result-time {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .result-date {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        .result-details {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: rgba(51, 65, 85, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .info-card h3 {
+            color: #3b82f6;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .info-card p {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .bulk-btn {
+            padding: 8px 16px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .bulk-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+        
+        .bulk-input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            text-align: center;
+        }
+        
+        .progress-section {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(71, 85, 105, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1e40af);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+        
+        .status-info {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #10b981;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .status-info h4 {
+            color: #10b981;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .status-row:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+        
+        .status-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        
+        .current-time {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .current-time-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #10b981;
+        }
+        
+        .line-calendar {
+            display: none;
+        }
+        
+        .line-calendar.active {
+            display: block;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .save-status {
+            color: #10b981;
+            font-size: 0.9em;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .daily-seq-info {
+            margin-top: 20px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .daily-seq-info h4 {
+            color: #3b82f6;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .daily-seq-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .daily-seq-row:last-child {
+            border-bottom: none;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 組順使用日時計算シール</h1>
+            <p>複数ライン対応 - 組順から部品使用時刻を計算</p>
+        </div>
+        
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="main">🎯 メイン計算</button>
+            <button class="tab-button" data-tab="schedule">📅 生産スケジュール管理</button>
+        </div>
+        
+        <!-- メインタブ -->
+        <div id="main-tab" class="tab-content active">
+            <div class="current-time">
+                <div>現在時刻: <span class="current-time-display" id="currentTimeDisplay">--:--:--</span></div>
+            </div>
+            
+            <div class="line-selector">
+                <h3>🚀 ライン選択</h3>
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="selectedLine">計算対象ライン</label>
+                        <select id="selectedLine">
+                            <option value="line1">MB</option>
+                            <option value="line2">小型</option>
+                            <option value="line3">RX</option>
+                            <option value="line4">L7</option>
+                            <option value="line5">WL</option>
+                            <option value="line6">RX506</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="lineStartTime">ライン開始時刻 (標準)</label>
+                    <input type="time" id="lineStartTime" value="08:20">
+                </div>
+                
+                <div class="input-group">
+                    <label for="actualStartTime">計算開始時刻</label>
+                    <input type="time" id="actualStartTime">
+                    <button type="button" class="use-now-btn" id="setCurrentTimeBtn">
+                        ⏱ 現在時刻を設定
+                    </button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="tactTime">タクトタイム (秒)</label>
+                    <input type="number" id="tactTime" value="234" min="1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="currentSeq">現在の組順</label>
+                    <input type="number" id="currentSeq" value="49" min="1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="targetSeq">知りたい組順</label>
+                    <input type="number" id="targetSeq" value="122" min="1">
+                </div>
+            </div>
+            
+            <div class="production-section">
+                <h3>📊 今日の生産計画 (<span id="currentLineName">MB</span>)</h3>
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="todayPlan">今日の生産計画 (台)</label>
+                        <input type="number" id="todayPlan" value="150" min="1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="completedToday">今日の完了数 (台)</label>
+                        <input type="number" id="completedToday" value="20" min="0">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="monthlyPlan">今月の生産計画 (台)</label>
+                        <input type="number" id="monthlyPlan" value="3000" min="1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="workDaysPerMonth">今月の稼働日数</label>
+                        <input type="number" id="workDaysPerMonth" value="22" min="1">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-info">
+                <h4>📈 生産状況</h4>
+                <div class="status-row">
+                    <span class="status-label">今日の残り台数</span>
+                    <span class="status-value" id="remainingToday">130台</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">今日の最終組順予測</span>
+                    <span class="status-value" id="finalSeqToday">180</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">達成率</span>
+                    <span class="status-value" id="achievementRate">13.3%</span>
+                </div>
+            </div>
+            
+            <div class="break-section">
+                <h3>⏰ 休憩時間設定</h3>
+                <div class="break-inputs">
+                    <div class="break-group">
+                        <div class="input-group">
+                            <label for="break1Time">1回目休憩開始時刻</label>
+                            <input type="time" id="break1Time" value="10:00">
+                        </div>
+                        <div class="input-group">
+                            <label for="break1Duration">休憩時間 (分)</label>
+                            <input type="number" id="break1Duration" value="10" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="break-group">
+                        <div class="input-group">
+                            <label for="break2Time">2回目休憩開始時刻</label>
+                            <input type="time" id="break2Time" value="12:00">
+                        </div>
+                        <div class="input-group">
+                            <label for="break2Duration">休憩時間 (分)</label>
+                            <input type="number" id="break2Duration" value="45" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="break-group">
+                        <div class="input-group">
+                            <label for="break3Time">3回目休憩開始時刻</label>
+                            <input type="time" id="break3Time" value="15:00">
+                        </div>
+                        <div class="input-group">
+                            <label for="break3Duration">休憩時間 (分)</label>
+                            <input type="number" id="break3Duration" value="10" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="break-group">
+                        <div class="input-group">
+                            <label for="break4Time">4回目休憩開始時刻</label>
+                            <input type="time" id="break4Time" value="17:00">
+                        </div>
+                        <div class="input-group">
+                            <label for="break4Duration">休憩時間 (分)</label>
+                            <input type="number" id="break4Duration" value="10" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="calculate-btn" id="calculateBtn">
+                ⚡ 時刻を計算する
+            </button>
+            
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <h3 style="margin-bottom: 15px; color: #cbd5e1;">📊 進捗状況</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">0% 完了</div>
+            </div>
+            
+            <div class="result-section" id="resultSection">
+                <div class="result-title">🎯 計算結果</div>
+                <div class="result-time" id="resultTime">--:--</div>
+                <div class="result-date" id="resultDate">----年--月--日</div>
+                <div class="result-details" id="resultDetails">詳細情報</div>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>使用予定日時</h3>
+                        <p id="arrivalTime">----年--月--日 --:--</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>必要時間</h3>
+                        <p id="totalTime">--</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>休憩時間</h3>
+                        <p id="breakTime">--</p>
+                    </div>
+                </div>
+                
+                <div class="daily-seq-info" id="dailySeqInfo" style="display: none;">
+                    <h4>📅 各日の終わり組順</h4>
+                    <div id="dailySeqList"></div>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <button class="save-btn" id="saveAllDataBtn">
+                        💾 データを保存
+                    </button>
+                    <button class="download-btn" id="downloadDataBtn">
+                        ⬇️ データをダウンロード
+                    </button>
+                    <div class="save-status" id="saveStatus"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- スケジュール管理タブ -->
+        <div id="schedule-tab" class="tab-content">
+            <div class="calendar-section">
+                <h3>📅 月間生産スケジュール管理 (2ヶ月表示)</h3>
+                
+                <div class="line-tabs">
+                    <div class="line-tab active" data-line="line1">MB</div>
+                    <div class="line-tab" data-line="line2">小型</div>
+                    <div class="line-tab" data-line="line3">RX</div>
+                    <div class="line-tab" data-line="line4">L7</div>
+                    <div class="line-tab" data-line="line5">WL</div>
+                    <div class="line-tab" data-line="line6">RX506</div>
+                </div>
+                
+                <div class="bulk-actions">
+                    <input type="number" id="bulkValue" class="bulk-input" placeholder="生産台数" min="0">
+                    <button class="bulk-btn" id="copyToAllBtn">全日にコピー</button>
+                    <button class="bulk-btn" id="copyToWeekdaysBtn">平日にコピー</button>
+                    <button class="bulk-btn" id="clearAllBtn">すべてクリア</button>
+                </div>
+                
+                <!-- ライン1のカレンダー -->
+                <div id="line1-calendar" class="line-calendar active">
+                    <div id="line1-calendar-container"></div>
+                </div>
+                
+                <!-- ライン2のカレンダー -->
+                <div id="line2-calendar" class="line-calendar">
+                    <div id="line2-calendar-container"></div>
+                </div>
+                
+                <!-- ライン3のカレンダー -->
+                <div id="line3-calendar" class="line-calendar">
+                    <div id="line3-calendar-container"></div>
+                </div>
+                
+                <!-- ライン4のカレンダー -->
+                <div id="line4-calendar" class="line-calendar">
+                    <div id="line4-calendar-container"></div>
+                </div>
+                
+                <!-- ライン5のカレンダー -->
+                <div id="line5-calendar" class="line-calendar">
+                    <div id="line5-calendar-container"></div>
+                </div>
+                
+                <!-- ライン6のカレンダー -->
+                <div id="line6-calendar" class="line-calendar">
+                    <div id="line6-calendar-container"></div>
+                </div>
+                
+                <div class="input-section">
+                    <div class="input-group">
+                        <button class="save-btn" id="saveScheduleBtn">
+                            💾 データを保存
+                        </button>
+                        <button class="download-btn" id="downloadScheduleBtn">
+                            ⬇️ データをダウンロード
+                        </button>
+                        <div class="save-status" id="scheduleSaveStatus"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // データ保存用オブジェクト
+        const productionData = {
+            version: "1.0",
+            lastSaved: null,
+            lines: {
+                line1: { 
+                    name: "MB",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 49,
+                        targetSeq: 122,
+                        todayPlan: 150,
+                        completedToday: 20,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                },
+                line2: { 
+                    name: "小型",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 1,
+                        targetSeq: 1,
+                        todayPlan: 150,
+                        completedToday: 0,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                },
+                line3: { 
+                    name: "RX",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 1,
+                        targetSeq: 1,
+                        todayPlan: 150,
+                        completedToday: 0,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                },
+                line4: { 
+                    name: "L7",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 1,
+                        targetSeq: 1,
+                        todayPlan: 150,
+                        completedToday: 0,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                },
+                line5: { 
+                    name: "WL",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 1,
+                        targetSeq: 1,
+                        todayPlan: 150,
+                        completedToday: 0,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                },
+                line6: { 
+                    name: "RX506",
+                    settings: {
+                        lineStartTime: "08:20",
+                        actualStartTime: "",
+                        tactTime: 234,
+                        currentSeq: 1,
+                        targetSeq: 1,
+                        todayPlan: 150,
+                        completedToday: 0,
+                        monthlyPlan: 3000,
+                        workDaysPerMonth: 22,
+                        breaks: [
+                            { time: "10:00", duration: 10 },
+                            { time: "12:00", duration: 45 },
+                            { time: "15:00", duration: 10 },
+                            { time: "17:00", duration: 10 }
+                        ]
+                    }, 
+                    calendar: {},
+                    lastUpdated: null
+                }
+            }
+        };
+
+        // 各日の終わり組順を記録する配列
+        let dailySequences = [];
+
+        // 現在時刻を表示
+        function updateCurrentTime() {
+            try {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const timeDisplay = document.getElementById('currentTimeDisplay');
+                if (timeDisplay) {
+                    timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+                }
+            } catch (e) {
+                console.error("時刻更新エラー:", e);
+            }
+        }
+
+        // フォーマットされた現在時刻を取得
+        function getCurrentTimeFormatted() {
+            try {
+                const now = new Date();
+                return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            } catch (e) {
+                console.error("時刻取得エラー:", e);
+                return "00:00";
+            }
+        }
+
+        // 現在時刻を設定
+        function setCurrentTime() {
+            try {
+                document.getElementById('actualStartTime').value = getCurrentTimeFormatted();
+            } catch (e) {
+                console.error("現在時刻設定エラー:", e);
+            }
+        }
+
+        // タブ切り替え
+        function switchTab(tabName) {
+            try {
+                // すべてのタブコンテンツを非表示
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // すべてのタブボタンのactiveクラスを削除
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // 指定したタブを表示
+                const tabToShow = document.getElementById(`${tabName}-tab`);
+                if (tabToShow) {
+                    tabToShow.classList.add('active');
+                }
+                
+                // 対応するタブボタンにactiveクラスを追加
+                const buttons = document.querySelectorAll('.tab-button');
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('data-tab') === tabName) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // スケジュールタブの場合はカレンダーを生成
+                if (tabName === 'schedule') {
+                    const activeLine = document.querySelector('.line-tab.active')?.getAttribute('data-line') || 'line1';
+                    generateCalendar(activeLine);
+                }
+            } catch (e) {
+                console.error("タブ切り替えエラー:", e);
+            }
+        }
+
+        // ラインデータ更新
+        function updateLineData() {
+            try {
+                const selectedLine = document.getElementById('selectedLine').value;
+                const lineNameDisplay = document.getElementById('currentLineName');
+                if (lineNameDisplay) {
+                    lineNameDisplay.textContent = productionData.lines[selectedLine].name;
+                }
+                loadLineSettings(selectedLine);
+            } catch (e) {
+                console.error("ラインデータ更新エラー:", e);
+            }
+        }
+
+        // ライン切り替え（スケジュールタブ）
+        function switchLine(line) {
+            try {
+                document.querySelectorAll('.line-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.line-calendar').forEach(cal => {
+                    cal.classList.remove('active');
+                });
+                
+                const lineTab = document.querySelector(`.line-tab[data-line="${line}"]`);
+                const lineCalendar = document.getElementById(`${line}-calendar`);
+                
+                if (lineTab) lineTab.classList.add('active');
+                if (lineCalendar) lineCalendar.classList.add('active');
+                
+                generateCalendar(line);
+            } catch (e) {
+                console.error("ライン切り替えエラー:", e);
+            }
+        }
+
+        // 時間計算（生産計画を考慮した日付跨ぎ計算）
+        function calculateTime() {
+            try {
+                console.log("計算開始");
+                
+                const line = document.getElementById('selectedLine').value;
+                const lineStartTime = document.getElementById('lineStartTime').value;
+                let actualStartTime = document.getElementById('actualStartTime').value;
+                
+                if (!actualStartTime) {
+                    actualStartTime = lineStartTime;
+                    document.getElementById('actualStartTime').value = actualStartTime;
+                }
+                
+                const tactTime = parseInt(document.getElementById('tactTime').value) || 234;
+                const currentSeq = parseInt(document.getElementById('currentSeq').value) || 1;
+                const targetSeq = parseInt(document.getElementById('targetSeq').value) || 1;
+                const completedToday = parseInt(document.getElementById('completedToday').value) || 0;
+                
+                // 休憩時間取得
+                const breaks = [
+                    { time: document.getElementById('break1Time').value, duration: parseInt(document.getElementById('break1Duration').value) || 0 },
+                    { time: document.getElementById('break2Time').value, duration: parseInt(document.getElementById('break2Duration').value) || 0 },
+                    { time: document.getElementById('break3Time').value, duration: parseInt(document.getElementById('break3Duration').value) || 0 },
+                    { time: document.getElementById('break4Time').value, duration: parseInt(document.getElementById('break4Duration').value) || 0 }
+                ].filter(b => b.time && b.duration > 0);
+
+                // 基本計算
+                const seqDiff = targetSeq - currentSeq;
+                if (seqDiff <= 0) {
+                    alert("目標組順は現在組順より大きい値を入力してください");
+                    return;
+                }
+                
+                let remainingSeqs = seqDiff;
+                let totalBreakTime = 0;
+                dailySequences = []; // 各日の終わり組順をリセット
+                
+                // 実際の開始時刻を使用
+                const [startHours, startMinutes] = actualStartTime.split(':').map(Number);
+                let currentDate = new Date();
+                currentDate.setHours(startHours, startMinutes, 0, 0);
+                
+                // 終了日時を計算（初期値は開始時刻）
+                let endDate = new Date(currentDate);
+                
+                // 生産計画を考慮した日付跨ぎ計算
+                while (remainingSeqs > 0) {
+                    // 当日の生産計画を取得（カレンダーから）
+                    const dailyPlan = getTodayPlan(currentDate);
+                    
+                    // 初日のみ完了数を考慮
+                    const completed = (currentDate.getDate() === new Date().getDate()) ? completedToday : 0;
+                    
+                    // 当日生産可能な最大台数
+                    const dailyCapacity = dailyPlan - completed;
+                    
+                    // 当日生産する台数（残り台数と生産可能台数の小さい方）
+                    const produceToday = Math.min(remainingSeqs, dailyCapacity);
+                    
+                    if (produceToday <= 0) {
+                        // 当日の生産計画を達成しているので翌日へ
+                        // 土日の場合はスキップ
+                        let nextDate = new Date(currentDate);
+                        do {
+                            nextDate.setDate(nextDate.getDate() + 1);
+                        } while (nextDate.getDay() === 0 || nextDate.getDay() === 6); // 0=日曜日, 6=土曜日
+                        
+                        currentDate = nextDate;
+                        const [startH, startM] = lineStartTime.split(':').map(Number);
+                        currentDate.setHours(startH, startM, 0, 0);
+                        continue;
+                    }
+                    
+                    // 生産時間計算
+                    const productionTime = produceToday * tactTime;
+                    
+                    // 作業終了時刻を計算（休憩時間を考慮）
+                    let remainingProductionTime = productionTime;
+                    let currentPosition = new Date(currentDate);
+                    
+                    // 休憩時間を考慮した作業時間計算
+                    while (remainingProductionTime > 0) {
+                        // 当日の終了時刻（23:59:59）
+                        const dayEnd = new Date(currentPosition);
+                        dayEnd.setHours(23, 59, 59, 999);
+                        
+                        // 当日の休憩時間を取得
+                        const dayBreaks = breaks.map(b => {
+                            const [hours, minutes] = b.time.split(':').map(Number);
+                            const breakTime = new Date(currentPosition);
+                            breakTime.setHours(hours, minutes, 0, 0);
+                            return {
+                                time: breakTime,
+                                duration: b.duration * 60 // 分→秒変換
+                            };
+                        }).filter(b => b.time.getDate() === currentPosition.getDate());
+                        
+                        // 休憩時間をソート
+                        dayBreaks.sort((a, b) => a.time.getTime() - b.time.getTime());
+                        
+                        // 当日の作業可能時間を計算
+                        let workStart = currentPosition.getTime();
+                        let workEnd = Math.min(
+                            workStart + remainingProductionTime * 1000,
+                            dayEnd.getTime()
+                        );
+                        
+                        // 休憩時間を考慮して実際の作業時間を計算
+                        let actualWorkTime = 0;
+                        let lastWorkEnd = workStart;
+                        
+                        for (const b of dayBreaks) {
+                            const breakStart = b.time.getTime();
+                            const breakEnd = breakStart + b.duration * 1000;
+                            
+                            // 休憩前の作業時間
+                            if (lastWorkEnd < breakStart) {
+                                const segment = Math.min(breakStart, workEnd) - lastWorkEnd;
+                                actualWorkTime += segment;
+                                lastWorkEnd = breakStart;
+                            }
+                            
+                            // 休憩時間をスキップ
+                            if (lastWorkEnd < breakEnd) {
+                                totalBreakTime += (breakEnd - lastWorkEnd) / 1000;
+                                lastWorkEnd = breakEnd;
+                            }
+                            
+                            if (lastWorkEnd >= workEnd) break;
+                        }
+                        
+                        // 最後の休憩後の作業時間
+                        if (lastWorkEnd < workEnd) {
+                            actualWorkTime += workEnd - lastWorkEnd;
+                        }
+                        
+                        // 実際の作業時間を加算
+                        const workedTime = actualWorkTime / 1000;
+                        remainingProductionTime -= workedTime;
+                        
+                        // 終了位置を更新
+                        endDate = new Date(workEnd);
+                        
+                        // 翌日に移動
+                        if (remainingProductionTime > 0) {
+                            currentPosition = new Date(dayEnd);
+                            currentPosition.setDate(currentPosition.getDate() + 1);
+                            const [startH, startM] = lineStartTime.split(':').map(Number);
+                            currentPosition.setHours(startH, startM, 0, 0);
+                        }
+                    }
+                    
+                    // 当日の終わり組順を記録
+                    const endSeq = currentSeq + (seqDiff - remainingSeqs);
+                    dailySequences.push({
+                        date: new Date(currentDate),
+                        endSeq: endSeq
+                    });
+                    
+                    // 残り台数を更新
+                    remainingSeqs -= produceToday;
+                    
+                    // 翌日に移動
+                    if (remainingSeqs > 0) {
+                        // 土日の場合はスキップ
+                        let nextDate = new Date(currentDate);
+                        do {
+                            nextDate.setDate(nextDate.getDate() + 1);
+                        } while (nextDate.getDay() === 0 || nextDate.getDay() === 6); // 0=日曜日, 6=土曜日
+                        
+                        currentDate = nextDate;
+                        const [startH, startM] = lineStartTime.split(':').map(Number);
+                        currentDate.setHours(startH, startM, 0, 0);
+                    }
+                }
+                
+                // 結果表示
+                const arrivalHours = String(endDate.getHours()).padStart(2, '0');
+                const arrivalMinutes = String(endDate.getMinutes()).padStart(2, '0');
+                const arrivalTime = `${arrivalHours}:${arrivalMinutes}`;
+                
+                showResult(arrivalTime, endDate, seqDiff * tactTime, totalBreakTime, seqDiff);
+                
+                // 設定を保存
+                saveLineSettings(line);
+                
+                console.log("計算完了");
+            } catch (e) {
+                console.error("計算エラー:", e);
+                alert("計算中にエラーが発生しました: " + e.message);
+            }
+        }
+
+        // 指定した日付の生産計画を取得
+        function getTodayPlan(date) {
+            try {
+                const line = document.getElementById('selectedLine').value;
+                const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                return parseInt(productionData.lines[line].calendar[dateKey]) || 0;
+            } catch (e) {
+                console.error("生産計画取得エラー:", e);
+                return 0;
+            }
+        }
+
+        // 結果表示
+        function showResult(arrivalTime, arrivalDate, productionTime, breakTime, seqDiff) {
+            try {
+                document.getElementById('resultTime').textContent = arrivalTime;
+                
+                // 日付を表示
+                const year = arrivalDate.getFullYear();
+                const month = arrivalDate.getMonth() + 1;
+                const day = arrivalDate.getDate();
+                document.getElementById('resultDate').textContent = `${year}年${month}月${day}日`;
+                
+                // 使用予定日時
+                document.getElementById('arrivalTime').textContent = `${year}年${month}月${day}日 ${arrivalTime}`;
+                document.getElementById('totalTime').textContent = formatDuration(productionTime + breakTime);
+                document.getElementById('breakTime').textContent = formatDuration(breakTime);
+                
+                // 各日の終わり組順を表示
+                const dailySeqList = document.getElementById('dailySeqList');
+                if (dailySeqList) {
+                    dailySeqList.innerHTML = '';
+                    
+                    dailySequences.forEach(item => {
+                        const dateStr = `${item.date.getFullYear()}年${item.date.getMonth() + 1}月${item.date.getDate()}日`;
+                        const row = document.createElement('div');
+                        row.className = 'daily-seq-row';
+                        row.innerHTML = `
+                            <span>${dateStr}</span>
+                            <span>${item.endSeq}組</span>
+                        `;
+                        dailySeqList.appendChild(row);
+                    });
+                    
+                    document.getElementById('dailySeqInfo').style.display = 'block';
+                }
+                
+                const resultSection = document.getElementById('resultSection');
+                if (resultSection) {
+                    resultSection.classList.add('show');
+                }
+                
+                updateProductionStatus();
+            } catch (e) {
+                console.error("結果表示エラー:", e);
+            }
+        }
+
+        // 生産状況更新
+        function updateProductionStatus() {
+            try {
+                const now = new Date();
+                const todayPlan = getTodayPlan(now);
+                const completedToday = parseInt(document.getElementById('completedToday').value) || 0;
+                const remainingToday = Math.max(0, todayPlan - completedToday);
+                
+                document.getElementById('todayPlan').value = todayPlan;
+                
+                let achievementRate = "0%";
+                if (todayPlan > 0) {
+                    achievementRate = `${((completedToday / todayPlan) * 100).toFixed(1)}%`;
+                }
+                
+                document.getElementById('remainingToday').textContent = `${remainingToday}台`;
+                document.getElementById('achievementRate').textContent = achievementRate;
+                
+                // 最終組順予測
+                const tactTime = parseInt(document.getElementById('tactTime').value);
+                const currentSeq = parseInt(document.getElementById('currentSeq').value);
+                
+                if (tactTime > 0) {
+                    // 終業時刻を17:30と仮定
+                    const endWorkTime = new Date();
+                    endWorkTime.setHours(17, 30, 0, 0);
+                    
+                    // 残り稼働時間（秒）
+                    const remainingSeconds = Math.max(0, (endWorkTime - now) / 1000);
+                    
+                    // 休憩時間を差し引く
+                    const remainingWorkTime = remainingSeconds - getRemainingBreakTime(now, endWorkTime);
+                    
+                    // 最終組順予測
+                    const estimatedSeq = currentSeq + Math.floor(remainingWorkTime / tactTime);
+                    document.getElementById('finalSeqToday').textContent = estimatedSeq;
+                }
+            } catch (e) {
+                console.error("生産状況更新エラー:", e);
+            }
+        }
+
+        // 残り休憩時間を計算
+        function getRemainingBreakTime(now, endTime) {
+            try {
+                const breaks = [
+                    { time: document.getElementById('break1Time').value, duration: parseInt(document.getElementById('break1Duration').value) || 0 },
+                    { time: document.getElementById('break2Time').value, duration: parseInt(document.getElementById('break2Duration').value) || 0 },
+                    { time: document.getElementById('break3Time').value, duration: parseInt(document.getElementById('break3Duration').value) || 0 },
+                    { time: document.getElementById('break4Time').value, duration: parseInt(document.getElementById('break4Duration').value) || 0 }
+                ].filter(b => b.time && b.duration > 0);
+                
+                let totalBreakTime = 0;
+                
+                breaks.forEach(breakInfo => {
+                    const [hours, minutes] = breakInfo.time.split(':').map(Number);
+                    const breakStart = new Date(now);
+                    breakStart.setHours(hours, minutes, 0, 0);
+                    
+                    // まだ発生していない休憩で、終業時刻前のもの
+                    if (breakStart > now && breakStart < endTime) {
+                        totalBreakTime += breakInfo.duration * 60; // 分→秒
+                    }
+                });
+                
+                return totalBreakTime;
+            } catch (e) {
+                console.error("休憩時間計算エラー:", e);
+                return 0;
+            }
+        }
+
+        // ライン設定を保存
+        function saveLineSettings(line) {
+            try {
+                productionData.lines[line].settings = {
+                    lineStartTime: document.getElementById('lineStartTime').value,
+                    actualStartTime: document.getElementById('actualStartTime').value,
+                    tactTime: document.getElementById('tactTime').value,
+                    currentSeq: document.getElementById('currentSeq').value,
+                    targetSeq: document.getElementById('targetSeq').value,
+                    todayPlan: document.getElementById('todayPlan').value,
+                    completedToday: document.getElementById('completedToday').value,
+                    monthlyPlan: document.getElementById('monthlyPlan').value,
+                    workDaysPerMonth: document.getElementById('workDaysPerMonth').value,
+                    breaks: [
+                        {
+                            time: document.getElementById('break1Time').value,
+                            duration: document.getElementById('break1Duration').value
+                        },
+                        {
+                            time: document.getElementById('break2Time').value,
+                            duration: document.getElementById('break2Duration').value
+                        },
+                        {
+                            time: document.getElementById('break3Time').value,
+                            duration: document.getElementById('break3Duration').value
+                        },
+                        {
+                            time: document.getElementById('break4Time').value,
+                            duration: document.getElementById('break4Duration').value
+                        }
+                    ],
+                    lastUpdated: new Date().toISOString()
+                };
+                showSaveStatus();
+            } catch (e) {
+                console.error("設定保存エラー:", e);
+            }
+        }
+
+        // カレンダーデータ保存
+        function saveCalendarData(line, date, value) {
+            try {
+                const dateParts = date.split('-');
+                const year = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1;
+                const day = parseInt(dateParts[2]);
+                const dateObj = new Date(year, month, day);
+                
+                // 土日(0=日曜日, 6=土曜日)は保存しない
+                if (dateObj.getDay() !== 0 && dateObj.getDay() !== 6) {
+                    productionData.lines[line].calendar[date] = value;
+                    productionData.lines[line].lastUpdated = new Date().toISOString();
+                    
+                    // 今日の日付なら生産計画を更新
+                    const today = new Date();
+                    if (dateObj.getDate() === today.getDate() && 
+                        dateObj.getMonth() === today.getMonth() && 
+                        dateObj.getFullYear() === today.getFullYear()) {
+                        document.getElementById('todayPlan').value = value || 0;
+                        updateProductionStatus();
+                    }
+                }
+            } catch (e) {
+                console.error("カレンダー保存エラー:", e);
+            }
+        }
+
+        // 全データ保存
+        function saveAllData() {
+            try {
+                productionData.lastSaved = new Date().toISOString();
+                localStorage.setItem('productionData', JSON.stringify(productionData));
+                showSaveStatus();
+            } catch (e) {
+                console.error("データ保存エラー:", e);
+            }
+        }
+
+        // データをダウンロード
+        function downloadData() {
+            try {
+                const dataStr = JSON.stringify(productionData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `生産データ_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showSaveStatus();
+            } catch (e) {
+                console.error("データダウンロードエラー:", e);
+            }
+        }
+
+        // 保存状態表示
+        function showSaveStatus() {
+            try {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                const statusElements = document.querySelectorAll('.save-status');
+                
+                statusElements.forEach(el => {
+                    if (el) {
+                        el.textContent = `最終保存: ${timeStr}`;
+                        setTimeout(() => {
+                            if (el) el.textContent = '';
+                        }, 3000);
+                    }
+                });
+            } catch (e) {
+                console.error("保存状態表示エラー:", e);
+            }
+        }
+
+        // ライン設定を読み込み
+        function loadLineSettings(line) {
+            try {
+                if (productionData.lines[line]?.settings) {
+                    const settings = productionData.lines[line].settings;
+                    
+                    document.getElementById('lineStartTime').value = settings.lineStartTime || '08:00';
+                    document.getElementById('actualStartTime').value = settings.actualStartTime || '';
+                    document.getElementById('tactTime').value = settings.tactTime || 180;
+                    document.getElementById('currentSeq').value = settings.currentSeq || 1;
+                    document.getElementById('targetSeq').value = settings.targetSeq || 1;
+                    
+                    // 今日の生産計画はカレンダーから自動取得
+                    const today = new Date();
+                    const todayPlan = getTodayPlan(today);
+                    document.getElementById('todayPlan').value = todayPlan || (settings.todayPlan || 150);
+                    
+                    document.getElementById('completedToday').value = settings.completedToday || 0;
+                    document.getElementById('monthlyPlan').value = settings.monthlyPlan || 3000;
+                    document.getElementById('workDaysPerMonth').value = settings.workDaysPerMonth || 22;
+                    
+                    if (settings.breaks && settings.breaks.length >= 4) {
+                        document.getElementById('break1Time').value = settings.breaks[0].time || '10:00';
+                        document.getElementById('break1Duration').value = settings.breaks[0].duration || 10;
+                        document.getElementById('break2Time').value = settings.breaks[1].time || '12:00';
+                        document.getElementById('break2Duration').value = settings.breaks[1].duration || 45;
+                        document.getElementById('break3Time').value = settings.breaks[2].time || '15:00';
+                        document.getElementById('break3Duration').value = settings.breaks[2].duration || 10;
+                        document.getElementById('break4Time').value = settings.breaks[3].time || '17:00';
+                        document.getElementById('break4Duration').value = settings.breaks[3].duration || 10;
+                    }
+                }
+            } catch (e) {
+                console.error("設定読み込みエラー:", e);
+            }
+        }
+
+        // カレンダー生成
+        function generateCalendar(line) {
+            try {
+                const container = document.getElementById(`${line}-calendar-container`);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                
+                // 今月と来月のカレンダーを生成
+                for (let i = 0; i < 2; i++) {
+                    const month = (currentMonth + i) % 12;
+                    const year = currentYear + Math.floor((currentMonth + i) / 12);
+                    
+                    const monthContainer = document.createElement('div');
+                    monthContainer.className = 'month-container';
+                    
+                    const monthHeader = document.createElement('div');
+                    monthHeader.className = 'month-header';
+                    monthHeader.textContent = `${year}年 ${month + 1}月`;
+                    monthContainer.appendChild(monthHeader);
+                    
+                    const calendarGrid = document.createElement('div');
+                    calendarGrid.className = 'calendar-grid';
+                    
+                    // 曜日ヘッダー
+                    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+                    weekdays.forEach(day => {
+                        const dayHeader = document.createElement('div');
+                        dayHeader.className = 'calendar-header';
+                        dayHeader.textContent = day;
+                        calendarGrid.appendChild(dayHeader);
+                    });
+                    
+                    // 月の最初の日
+                    const firstDay = new Date(year, month, 1);
+                    // 月の最後の日
+                    const lastDay = new Date(year, month + 1, 0);
+                    
+                    // 最初の日の曜日 (0=日曜日)
+                    const firstDayOfWeek = firstDay.getDay();
+                    
+                    // 前月の最後の日
+                    const prevLastDay = new Date(year, month, 0).getDate();
+                    
+                    // カレンダーの日付を生成
+                    let dayCount = 1;
+                    let nextMonthDay = 1;
+                    
+                    // 6週間分の行を生成
+                    for (let i = 0; i < 6; i++) {
+                        // 週の日付を生成
+                        for (let j = 0; j < 7; j++) {
+                            const dayElement = document.createElement('div');
+                            dayElement.className = 'calendar-day';
+                            
+                            // 前月の日付
+                            if (i === 0 && j < firstDayOfWeek) {
+                                const prevDay = prevLastDay - (firstDayOfWeek - j - 1);
+                                dayElement.innerHTML = `<div class="date" style="opacity:0.5">${prevDay}</div>`;
+                                dayElement.style.opacity = '0.5';
+                            }
+                            // 当月の日付
+                            else if (dayCount <= lastDay.getDate()) {
+                                const dateKey = `${year}-${month + 1}-${dayCount}`;
+                                const savedValue = productionData.lines[line].calendar[dateKey] || '';
+                                
+                                // 土日の場合、入力フィールドを表示しない
+                                if (j === 0 || j === 6) { // 0=日曜日, 6=土曜日
+                                    dayElement.innerHTML = `<div class="date">${dayCount}</div>`;
+                                    dayElement.classList.add('weekend');
+                                } else {
+                                    dayElement.innerHTML = `
+                                        <div class="date">${dayCount}</div>
+                                        <input type="number" 
+                                               placeholder="0" 
+                                               value="${savedValue}"
+                                               onchange="saveCalendarData('${line}', '${dateKey}', this.value)">
+                                    `;
+                                }
+                                
+                                // 今日の日付をハイライト
+                                if (dayCount === now.getDate() && month === currentMonth && year === currentYear) {
+                                    dayElement.classList.add('today');
+                                }
+                                
+                                dayCount++;
+                            }
+                            // 翌月の日付
+                            else {
+                                dayElement.innerHTML = `<div class="date" style="opacity:0.5">${nextMonthDay}</div>`;
+                                dayElement.style.opacity = '0.5';
+                                nextMonthDay++;
+                            }
+                            
+                            calendarGrid.appendChild(dayElement);
+                        }
+                    }
+                    
+                    monthContainer.appendChild(calendarGrid);
+                    container.appendChild(monthContainer);
+                }
+            } catch (e) {
+                console.error("カレンダー生成エラー:", e);
+            }
+        }
+
+        // 一括操作
+        function copyToAll() {
+            try {
+                const value = document.getElementById('bulkValue').value;
+                if (!value) return;
+                
+                const activeLine = document.querySelector('.line-tab.active')?.getAttribute('data-line');
+                if (!activeLine) return;
+                
+                const inputs = document.querySelectorAll(`#${activeLine}-calendar-container .calendar-day input`);
+                
+                inputs.forEach(input => {
+                    input.value = value;
+                    const dateElement = input.parentElement.querySelector('.date');
+                    if (dateElement && !isNaN(dateElement.textContent)) {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth() + 1;
+                        saveCalendarData(activeLine, `${year}-${month}-${dateElement.textContent}`, value);
+                    }
+                });
+            } catch (e) {
+                console.error("一括コピーエラー:", e);
+            }
+        }
+
+        function copyToWeekdays() {
+            try {
+                const value = document.getElementById('bulkValue').value;
+                if (!value) return;
+                
+                const activeLine = document.querySelector('.line-tab.active')?.getAttribute('data-line');
+                if (!activeLine) return;
+                
+                const inputs = document.querySelectorAll(`#${activeLine}-calendar-container .calendar-day:not(.weekend) input`);
+                
+                inputs.forEach(input => {
+                    input.value = value;
+                    const dateElement = input.parentElement.querySelector('.date');
+                    if (dateElement && !isNaN(dateElement.textContent)) {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth() + 1;
+                        saveCalendarData(activeLine, `${year}-${month}-${dateElement.textContent}`, value);
+                    }
+                });
+            } catch (e) {
+                console.error("平日コピーエラー:", e);
+            }
+        }
+
+        function clearAll() {
+            try {
+                const activeLine = document.querySelector('.line-tab.active')?.getAttribute('data-line');
+                if (!activeLine) return;
+                
+                const inputs = document.querySelectorAll(`#${activeLine}-calendar-container .calendar-day input`);
+                
+                inputs.forEach(input => {
+                    input.value = '';
+                    const dateElement = input.parentElement.querySelector('.date');
+                    if (dateElement && !isNaN(dateElement.textContent)) {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth() + 1;
+                        saveCalendarData(activeLine, `${year}-${month}-${dateElement.textContent}`, '');
+                    }
+                });
+            } catch (e) {
+                console.error("クリアエラー:", e);
+            }
+        }
+
+        // 時間計算ユーティリティ
+        function timeToSeconds(time) {
+            try {
+                const [hours, minutes] = time.split(':').map(Number);
+                return hours * 3600 + minutes * 60;
+            } catch (e) {
+                console.error("時間変換エラー:", e);
+                return 0;
+            }
+        }
+
+        function addMinutes(time, minutes) {
+            try {
+                const [hours, mins] = time.split(':').map(Number);
+                const totalMinutes = hours * 60 + mins + minutes;
+                const newHours = Math.floor(totalMinutes / 60) % 24;
+                const newMins = totalMinutes % 60;
+                return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
+            } catch (e) {
+                console.error("分加算エラー:", e);
+                return "00:00";
+            }
+        }
+
+        function addSeconds(time, seconds) {
+            try {
+                const [hours, mins] = time.split(':').map(Number);
+                const totalSeconds = hours * 3600 + mins * 60 + seconds;
+                const newHours = Math.floor(totalSeconds / 3600) % 24;
+                const newMins = Math.floor((totalSeconds % 3600) / 60);
+                return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
+            } catch (e) {
+                console.error("秒加算エラー:", e);
+                return "00:00";
+            }
+        }
+
+        function isTimeBetween(time, start, end) {
+            try {
+                const timeSec = timeToSeconds(time);
+                const startSec = timeToSeconds(start);
+                const endSec = timeToSeconds(end);
+                return timeSec >= startSec && timeSec <= endSec;
+            } catch (e) {
+                console.error("時間比較エラー:", e);
+                return false;
+            }
+        }
+
+        function calculateOverlap(start1, end1, start2, end2) {
+            try {
+                const start = Math.max(timeToSeconds(start1), timeToSeconds(start2));
+                const end = Math.min(timeToSeconds(end1), timeToSeconds(end2));
+                return Math.max(0, end - start);
+            } catch (e) {
+                console.error("時間重複計算エラー:", e);
+                return 0;
+            }
+        }
+
+        function formatDuration(seconds) {
+            try {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                return `${hours}時間${minutes}分`;
+            } catch (e) {
+                console.error("時間フォーマットエラー:", e);
+                return "0時間0分";
+            }
+        }
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 現在時刻の表示を即時更新
+                updateCurrentTime();
+                // 1秒ごとに時刻を更新
+                setInterval(updateCurrentTime, 1000);
+                
+                // ローカルストレージからデータを読み込み
+                const savedData = localStorage.getItem('productionData');
+                if (savedData) {
+                    try {
+                        const parsedData = JSON.parse(savedData);
+                        Object.assign(productionData, parsedData);
+                    } catch (e) {
+                        console.error("データの読み込みに失敗しました:", e);
+                    }
+                }
+                
+                // 初期ライン設定を読み込み
+                const initialLine = document.getElementById('selectedLine').value;
+                loadLineSettings(initialLine);
+                
+                // 初期タブを設定
+                switchTab('main');
+                
+                // イベントリスナーの設定
+                document.getElementById('selectedLine').addEventListener('change', function() {
+                    updateLineData();
+                });
+                
+                document.getElementById('setCurrentTimeBtn').addEventListener('click', setCurrentTime);
+                document.getElementById('calculateBtn').addEventListener('click', calculateTime);
+                document.getElementById('saveAllDataBtn').addEventListener('click', saveAllData);
+                document.getElementById('saveScheduleBtn').addEventListener('click', saveAllData);
+                document.getElementById('downloadDataBtn').addEventListener('click', downloadData);
+                document.getElementById('downloadScheduleBtn').addEventListener('click', downloadData);
+                document.getElementById('copyToAllBtn').addEventListener('click', copyToAll);
+                document.getElementById('copyToWeekdaysBtn').addEventListener('click', copyToWeekdays);
+                document.getElementById('clearAllBtn').addEventListener('click', clearAll);
+                
+                // タブボタンのイベントリスナー
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const tabName = this.getAttribute('data-tab');
+                        switchTab(tabName);
+                    });
+                });
+                
+                // ラインタブのイベントリスナー
+                document.querySelectorAll('.line-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const line = this.getAttribute('data-line');
+                        switchLine(line);
+                    });
+                });
+                
+                // 設定変更時に自動保存
+                document.getElementById('tactTime').addEventListener('change', function() {
+                    const line = document.getElementById('selectedLine').value;
+                    saveLineSettings(line);
+                });
+                
+                console.log("初期化完了");
+            } catch (e) {
+                console.error("初期化エラー:", e);
+            }
+        });
+    </script>
+</body>
+</html>

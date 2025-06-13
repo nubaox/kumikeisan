@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>組順使用日時計算シール</title>
     <style>
-        /* スタイル部分は変更なし（元のCSSをそのまま保持） */
         * {
             margin: 0;
             padding: 0;
@@ -703,12 +702,12 @@
                 
                 <div class="input-group">
                     <label for="currentSeq">現在の組順</label>
-                    <input type="number" id="currentSeq" value="49" min="1">
+                    <input type="number" id="currentSeq" value="40" min="1">
                 </div>
                 
                 <div class="input-group">
                     <label for="targetSeq">知りたい組順</label>
-                    <input type="number" id="targetSeq" value="122" min="1">
+                    <input type="number" id="targetSeq" value="400" min="1">
                 </div>
             </div>
             
@@ -717,12 +716,12 @@
                 <div class="input-section">
                     <div class="input-group">
                         <label for="todayPlan">今日の生産計画 (台)</label>
-                        <input type="number" id="todayPlan" value="150" min="1">
+                        <input type="number" id="todayPlan" value="70" min="1">
                     </div>
                     
                     <div class="input-group">
                         <label for="completedToday">今日の完了数 (台)</label>
-                        <input type="number" id="completedToday" value="20" min="0">
+                        <input type="number" id="completedToday" value="0" min="0">
                     </div>
                     
                     <div class="input-group">
@@ -741,15 +740,15 @@
                 <h4>📈 生産状況</h4>
                 <div class="status-row">
                     <span class="status-label">今日の残り台数</span>
-                    <span class="status-value" id="remainingToday">130台</span>
+                    <span class="status-value" id="remainingToday">70台</span>
                 </div>
                 <div class="status-row">
                     <span class="status-label">今日の最終組順予測</span>
-                    <span class="status-value" id="finalSeqToday">180</span>
+                    <span class="status-value" id="finalSeqToday">110</span>
                 </div>
                 <div class="status-row">
                     <span class="status-label">達成率</span>
-                    <span class="status-value" id="achievementRate">13.3%</span>
+                    <span class="status-value" id="achievementRate">0%</span>
                 </div>
             </div>
             
@@ -932,10 +931,10 @@
                         lineStartTime: "08:20",
                         actualStartTime: "",
                         tactTime: 234,
-                        currentSeq: 49,
-                        targetSeq: 122,
-                        todayPlan: 150,
-                        completedToday: 20,
+                        currentSeq: 40,
+                        targetSeq: 400,
+                        todayPlan: 70,
+                        completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
                         breaks: [
@@ -956,7 +955,7 @@
                         tactTime: 234,
                         currentSeq: 1,
                         targetSeq: 1,
-                        todayPlan: 150,
+                        todayPlan: 70,
                         completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
@@ -978,7 +977,7 @@
                         tactTime: 234,
                         currentSeq: 1,
                         targetSeq: 1,
-                        todayPlan: 150,
+                        todayPlan: 70,
                         completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
@@ -1000,7 +999,7 @@
                         tactTime: 234,
                         currentSeq: 1,
                         targetSeq: 1,
-                        todayPlan: 150,
+                        todayPlan: 70,
                         completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
@@ -1022,7 +1021,7 @@
                         tactTime: 234,
                         currentSeq: 1,
                         targetSeq: 1,
-                        todayPlan: 150,
+                        todayPlan: 70,
                         completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
@@ -1044,7 +1043,7 @@
                         tactTime: 234,
                         currentSeq: 1,
                         targetSeq: 1,
-                        todayPlan: 150,
+                        todayPlan: 70,
                         completedToday: 0,
                         monthlyPlan: 3000,
                         workDaysPerMonth: 22,
@@ -1071,10 +1070,7 @@
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const seconds = String(now.getSeconds()).padStart(2, '0');
-                const timeDisplay = document.getElementById('currentTimeDisplay');
-                if (timeDisplay) {
-                    timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
-                }
+                document.getElementById('currentTimeDisplay').textContent = `${hours}:${minutes}:${seconds}`;
             } catch (e) {
                 console.error("時刻更新エラー:", e);
             }
@@ -1114,14 +1110,10 @@
                 });
                 
                 // 指定したタブを表示
-                const tabToShow = document.getElementById(`${tabName}-tab`);
-                if (tabToShow) {
-                    tabToShow.classList.add('active');
-                }
+                document.getElementById(`${tabName}-tab`).classList.add('active');
                 
                 // 対応するタブボタンにactiveクラスを追加
-                const buttons = document.querySelectorAll('.tab-button');
-                buttons.forEach(btn => {
+                document.querySelectorAll('.tab-button').forEach(btn => {
                     if (btn.getAttribute('data-tab') === tabName) {
                         btn.classList.add('active');
                     }
@@ -1141,10 +1133,7 @@
         function updateLineData() {
             try {
                 const selectedLine = document.getElementById('selectedLine').value;
-                const lineNameDisplay = document.getElementById('currentLineName');
-                if (lineNameDisplay) {
-                    lineNameDisplay.textContent = productionData.lines[selectedLine].name;
-                }
+                document.getElementById('currentLineName').textContent = productionData.lines[selectedLine].name;
                 loadLineSettings(selectedLine);
             } catch (e) {
                 console.error("ラインデータ更新エラー:", e);
@@ -1173,199 +1162,199 @@
             }
         }
 
-        // 時間計算（生産計画を考慮した日付跨ぎ計算）
-        function calculateTime() {
-            try {
-                console.log("計算開始");
-                
-                const line = document.getElementById('selectedLine').value;
-                const lineStartTime = document.getElementById('lineStartTime').value;
-                let actualStartTime = document.getElementById('actualStartTime').value;
-                
-                if (!actualStartTime) {
-                    actualStartTime = lineStartTime;
-                    document.getElementById('actualStartTime').value = actualStartTime;
-                }
-                
-                const tactTime = parseInt(document.getElementById('tactTime').value) || 234;
-                const currentSeq = parseInt(document.getElementById('currentSeq').value) || 1;
-                const targetSeq = parseInt(document.getElementById('targetSeq').value) || 1;
-                const completedToday = parseInt(document.getElementById('completedToday').value) || 0;
-                
-                // 休憩時間取得
-                const breaks = [
-                    { time: document.getElementById('break1Time').value, duration: parseInt(document.getElementById('break1Duration').value) || 0 },
-                    { time: document.getElementById('break2Time').value, duration: parseInt(document.getElementById('break2Duration').value) || 0 },
-                    { time: document.getElementById('break3Time').value, duration: parseInt(document.getElementById('break3Duration').value) || 0 },
-                    { time: document.getElementById('break4Time').value, duration: parseInt(document.getElementById('break4Duration').value) || 0 }
-                ].filter(b => b.time && b.duration > 0);
+        // 時間計算関数の修正版
+function calculateTime() {
+    try {
+        const line = document.getElementById('selectedLine').value;
+        const lineStartTime = document.getElementById('lineStartTime').value;
+        let actualStartTime = document.getElementById('actualStartTime').value;
+        
+        if (!actualStartTime) {
+            actualStartTime = lineStartTime;
+            document.getElementById('actualStartTime').value = actualStartTime;
+        }
+        
+        const tactTime = parseInt(document.getElementById('tactTime').value) || 234;
+        const currentSeq = parseInt(document.getElementById('currentSeq').value) || 1;
+        const targetSeq = parseInt(document.getElementById('targetSeq').value) || 1;
+        const completedToday = parseInt(document.getElementById('completedToday').value) || 0;
+        const todayPlan = parseInt(document.getElementById('todayPlan').value) || 0;
+        
+        // 休憩時間取得
+        const breaks = [
+            { time: document.getElementById('break1Time').value, duration: parseInt(document.getElementById('break1Duration').value) || 0 },
+            { time: document.getElementById('break2Time').value, duration: parseInt(document.getElementById('break2Duration').value) || 0 },
+            { time: document.getElementById('break3Time').value, duration: parseInt(document.getElementById('break3Duration').value) || 0 },
+            { time: document.getElementById('break4Time').value, duration: parseInt(document.getElementById('break4Duration').value) || 0 }
+        ].filter(b => b.time && b.duration > 0);
 
-                // 基本計算
-                const seqDiff = targetSeq - currentSeq;
-                if (seqDiff <= 0) {
-                    alert("目標組順は現在組順より大きい値を入力してください");
-                    return;
+        // 基本計算
+        const seqDiff = targetSeq - currentSeq;
+        if (seqDiff <= 0) {
+            alert("目標組順は現在組順より大きい値を入力してください");
+            return;
+        }
+        
+        let remainingSeqs = seqDiff;
+        let totalBreakTime = 0;
+        dailySequences = []; // 各日の終わり組順をリセット
+        
+        // 実際の開始時刻を使用
+        const [startHours, startMinutes] = actualStartTime.split(':').map(Number);
+        let currentDate = new Date();
+        currentDate.setHours(startHours, startMinutes, 0, 0);
+        
+        // 終了日時を計算（初期値は開始時刻）
+        let endDate = new Date(currentDate);
+        
+        // 生産計画を考慮した日付跨ぎ計算
+        while (remainingSeqs > 0) {
+            // 当日の生産計画を取得（カレンダーから）
+            const dailyPlan = getTodayPlan(currentDate);
+            
+            // 初日のみ完了数を考慮
+            const isToday = currentDate.getDate() === new Date().getDate() && 
+                           currentDate.getMonth() === new Date().getMonth() && 
+                           currentDate.getFullYear() === new Date().getFullYear();
+            
+            // 当日生産可能な残り台数 = 生産計画 - 完了数
+            const remainingToday = isToday ? Math.max(0, dailyPlan - completedToday) : dailyPlan;
+            
+            // 当日生産する台数（残り台数と生産可能台数の小さい方）
+            const produceToday = Math.min(remainingSeqs, remainingToday);
+            
+            if (produceToday <= 0) {
+                // 当日の生産計画を達成しているので翌日へ
+                // 土日の場合はスキップ
+                let nextDate = new Date(currentDate);
+                do {
+                    nextDate.setDate(nextDate.getDate() + 1);
+                } while (nextDate.getDay() === 0 || nextDate.getDay() === 6);
+                
+                currentDate = nextDate;
+                const [startH, startM] = lineStartTime.split(':').map(Number);
+                currentDate.setHours(startH, startM, 0, 0);
+                continue;
+            }
+            
+            // 生産時間計算
+            const productionTime = produceToday * tactTime;
+            
+            // 作業終了時刻を計算（休憩時間を考慮）
+            let remainingProductionTime = productionTime;
+            let currentPosition = new Date(currentDate);
+            
+            // 休憩時間を考慮した作業時間計算
+            while (remainingProductionTime > 0) {
+                // 当日の終了時刻（23:59:59）
+                const dayEnd = new Date(currentPosition);
+                dayEnd.setHours(23, 59, 59, 999);
+                
+                // 当日の休憩時間を取得
+                const dayBreaks = breaks.map(b => {
+                    const [hours, minutes] = b.time.split(':').map(Number);
+                    const breakTime = new Date(currentPosition);
+                    breakTime.setHours(hours, minutes, 0, 0);
+                    return {
+                        time: breakTime,
+                        duration: b.duration * 60 // 分→秒変換
+                    };
+                }).filter(b => b.time.getDate() === currentPosition.getDate());
+                
+                // 休憩時間をソート
+                dayBreaks.sort((a, b) => a.time.getTime() - b.time.getTime());
+                
+                // 当日の作業可能時間を計算
+                let workStart = currentPosition.getTime();
+                let workEnd = Math.min(
+                    workStart + remainingProductionTime * 1000,
+                    dayEnd.getTime()
+                );
+                
+                // 休憩時間を考慮して実際の作業時間を計算
+                let actualWorkTime = 0;
+                let lastWorkEnd = workStart;
+                
+                for (const b of dayBreaks) {
+                    const breakStart = b.time.getTime();
+                    const breakEnd = breakStart + b.duration * 1000;
+                    
+                    // 休憩前の作業時間
+                    if (lastWorkEnd < breakStart) {
+                        const segment = Math.min(breakStart, workEnd) - lastWorkEnd;
+                        actualWorkTime += segment;
+                        lastWorkEnd = breakStart;
+                    }
+                    
+                    // 休憩時間をスキップ
+                    if (lastWorkEnd < breakEnd) {
+                        totalBreakTime += (breakEnd - lastWorkEnd) / 1000;
+                        lastWorkEnd = breakEnd;
+                    }
+                    
+                    if (lastWorkEnd >= workEnd) break;
                 }
                 
-                let remainingSeqs = seqDiff;
-                let totalBreakTime = 0;
-                dailySequences = []; // 各日の終わり組順をリセット
-                
-                // 実際の開始時刻を使用
-                const [startHours, startMinutes] = actualStartTime.split(':').map(Number);
-                let currentDate = new Date();
-                currentDate.setHours(startHours, startMinutes, 0, 0);
-                
-                // 終了日時を計算（初期値は開始時刻）
-                let endDate = new Date(currentDate);
-                
-                // 生産計画を考慮した日付跨ぎ計算
-                while (remainingSeqs > 0) {
-                    // 当日の生産計画を取得（カレンダーから）
-                    const dailyPlan = getTodayPlan(currentDate);
-                    
-                    // 初日のみ完了数を考慮
-                    const completed = (currentDate.getDate() === new Date().getDate()) ? completedToday : 0;
-                    
-                    // 当日生産可能な最大台数
-                    const dailyCapacity = dailyPlan - completed;
-                    
-                    // 当日生産する台数（残り台数と生産可能台数の小さい方）
-                    const produceToday = Math.min(remainingSeqs, dailyCapacity);
-                    
-                    if (produceToday <= 0) {
-                        // 当日の生産計画を達成しているので翌日へ
-                        // 土日の場合はスキップ
-                        let nextDate = new Date(currentDate);
-                        do {
-                            nextDate.setDate(nextDate.getDate() + 1);
-                        } while (nextDate.getDay() === 0 || nextDate.getDay() === 6); // 0=日曜日, 6=土曜日
-                        
-                        currentDate = nextDate;
-                        const [startH, startM] = lineStartTime.split(':').map(Number);
-                        currentDate.setHours(startH, startM, 0, 0);
-                        continue;
-                    }
-                    
-                    // 生産時間計算
-                    const productionTime = produceToday * tactTime;
-                    
-                    // 作業終了時刻を計算（休憩時間を考慮）
-                    let remainingProductionTime = productionTime;
-                    let currentPosition = new Date(currentDate);
-                    
-                    // 休憩時間を考慮した作業時間計算
-                    while (remainingProductionTime > 0) {
-                        // 当日の終了時刻（23:59:59）
-                        const dayEnd = new Date(currentPosition);
-                        dayEnd.setHours(23, 59, 59, 999);
-                        
-                        // 当日の休憩時間を取得
-                        const dayBreaks = breaks.map(b => {
-                            const [hours, minutes] = b.time.split(':').map(Number);
-                            const breakTime = new Date(currentPosition);
-                            breakTime.setHours(hours, minutes, 0, 0);
-                            return {
-                                time: breakTime,
-                                duration: b.duration * 60 // 分→秒変換
-                            };
-                        }).filter(b => b.time.getDate() === currentPosition.getDate());
-                        
-                        // 休憩時間をソート
-                        dayBreaks.sort((a, b) => a.time.getTime() - b.time.getTime());
-                        
-                        // 当日の作業可能時間を計算
-                        let workStart = currentPosition.getTime();
-                        let workEnd = Math.min(
-                            workStart + remainingProductionTime * 1000,
-                            dayEnd.getTime()
-                        );
-                        
-                        // 休憩時間を考慮して実際の作業時間を計算
-                        let actualWorkTime = 0;
-                        let lastWorkEnd = workStart;
-                        
-                        for (const b of dayBreaks) {
-                            const breakStart = b.time.getTime();
-                            const breakEnd = breakStart + b.duration * 1000;
-                            
-                            // 休憩前の作業時間
-                            if (lastWorkEnd < breakStart) {
-                                const segment = Math.min(breakStart, workEnd) - lastWorkEnd;
-                                actualWorkTime += segment;
-                                lastWorkEnd = breakStart;
-                            }
-                            
-                            // 休憩時間をスキップ
-                            if (lastWorkEnd < breakEnd) {
-                                totalBreakTime += (breakEnd - lastWorkEnd) / 1000;
-                                lastWorkEnd = breakEnd;
-                            }
-                            
-                            if (lastWorkEnd >= workEnd) break;
-                        }
-                        
-                        // 最後の休憩後の作業時間
-                        if (lastWorkEnd < workEnd) {
-                            actualWorkTime += workEnd - lastWorkEnd;
-                        }
-                        
-                        // 実際の作業時間を加算
-                        const workedTime = actualWorkTime / 1000;
-                        remainingProductionTime -= workedTime;
-                        
-                        // 終了位置を更新
-                        endDate = new Date(workEnd);
-                        
-                        // 翌日に移動
-                        if (remainingProductionTime > 0) {
-                            currentPosition = new Date(dayEnd);
-                            currentPosition.setDate(currentPosition.getDate() + 1);
-                            const [startH, startM] = lineStartTime.split(':').map(Number);
-                            currentPosition.setHours(startH, startM, 0, 0);
-                        }
-                    }
-                    
-                    // 当日の終わり組順を記録
-                    const endSeq = currentSeq + (seqDiff - remainingSeqs);
-                    dailySequences.push({
-                        date: new Date(currentDate),
-                        endSeq: endSeq
-                    });
-                    
-                    // 残り台数を更新
-                    remainingSeqs -= produceToday;
-                    
-                    // 翌日に移動
-                    if (remainingSeqs > 0) {
-                        // 土日の場合はスキップ
-                        let nextDate = new Date(currentDate);
-                        do {
-                            nextDate.setDate(nextDate.getDate() + 1);
-                        } while (nextDate.getDay() === 0 || nextDate.getDay() === 6); // 0=日曜日, 6=土曜日
-                        
-                        currentDate = nextDate;
-                        const [startH, startM] = lineStartTime.split(':').map(Number);
-                        currentDate.setHours(startH, startM, 0, 0);
-                    }
+                // 最後の休憩後の作業時間
+                if (lastWorkEnd < workEnd) {
+                    actualWorkTime += workEnd - lastWorkEnd;
                 }
                 
-                // 結果表示
-                const arrivalHours = String(endDate.getHours()).padStart(2, '0');
-                const arrivalMinutes = String(endDate.getMinutes()).padStart(2, '0');
-                const arrivalTime = `${arrivalHours}:${arrivalMinutes}`;
+                // 実際の作業時間を加算
+                const workedTime = actualWorkTime / 1000;
+                remainingProductionTime -= workedTime;
                 
-                showResult(arrivalTime, endDate, seqDiff * tactTime, totalBreakTime, seqDiff);
+                // 終了位置を更新
+                endDate = new Date(workEnd);
                 
-                // 設定を保存
-                saveLineSettings(line);
+                // 翌日に移動
+                if (remainingProductionTime > 0) {
+                    currentPosition = new Date(dayEnd);
+                    currentPosition.setDate(currentPosition.getDate() + 1);
+                    const [startH, startM] = lineStartTime.split(':').map(Number);
+                    currentPosition.setHours(startH, startM, 0, 0);
+                }
+            }
+            
+            // 当日の終わり組順を記録
+            const endSeq = currentSeq + (seqDiff - remainingSeqs) + (isToday ? completedToday : 0);
+            dailySequences.push({
+                date: new Date(currentDate),
+                endSeq: endSeq
+            });
+            
+            // 残り台数を更新
+            remainingSeqs -= produceToday;
+            
+            // 翌日に移動
+            if (remainingSeqs > 0) {
+                // 土日の場合はスキップ
+                let nextDate = new Date(currentDate);
+                do {
+                    nextDate.setDate(nextDate.getDate() + 1);
+                } while (nextDate.getDay() === 0 || nextDate.getDay() === 6);
                 
-                console.log("計算完了");
-            } catch (e) {
-                console.error("計算エラー:", e);
-                alert("計算中にエラーが発生しました: " + e.message);
+                currentDate = nextDate;
+                const [startH, startM] = lineStartTime.split(':').map(Number);
+                currentDate.setHours(startH, startM, 0, 0);
             }
         }
+        
+        // 結果表示
+        const arrivalHours = String(endDate.getHours()).padStart(2, '0');
+        const arrivalMinutes = String(endDate.getMinutes()).padStart(2, '0');
+        const arrivalTime = `${arrivalHours}:${arrivalMinutes}`;
+        
+        showResult(arrivalTime, endDate, seqDiff * tactTime, totalBreakTime, seqDiff);
+        
+        // 設定を保存
+        saveLineSettings(line);
+        
+    } catch (e) {
+        console.error("計算エラー:", e);
+        alert("計算中にエラーが発生しました: " + e.message);
+    }
+}
 
         // 指定した日付の生産計画を取得
         function getTodayPlan(date) {
@@ -1397,27 +1386,21 @@
                 
                 // 各日の終わり組順を表示
                 const dailySeqList = document.getElementById('dailySeqList');
-                if (dailySeqList) {
-                    dailySeqList.innerHTML = '';
-                    
-                    dailySequences.forEach(item => {
-                        const dateStr = `${item.date.getFullYear()}年${item.date.getMonth() + 1}月${item.date.getDate()}日`;
-                        const row = document.createElement('div');
-                        row.className = 'daily-seq-row';
-                        row.innerHTML = `
-                            <span>${dateStr}</span>
-                            <span>${item.endSeq}組</span>
-                        `;
-                        dailySeqList.appendChild(row);
-                    });
-                    
-                    document.getElementById('dailySeqInfo').style.display = 'block';
-                }
+                dailySeqList.innerHTML = '';
                 
-                const resultSection = document.getElementById('resultSection');
-                if (resultSection) {
-                    resultSection.classList.add('show');
-                }
+                dailySequences.forEach(item => {
+                    const dateStr = `${item.date.getFullYear()}年${item.date.getMonth() + 1}月${item.date.getDate()}日`;
+                    const row = document.createElement('div');
+                    row.className = 'daily-seq-row';
+                    row.innerHTML = `
+                        <span>${dateStr}</span>
+                        <span>組順${item.endSeq}</span>
+                    `;
+                    dailySeqList.appendChild(row);
+                });
+                
+                document.getElementById('dailySeqInfo').style.display = 'block';
+                document.getElementById('resultSection').classList.add('show');
                 
                 updateProductionStatus();
             } catch (e) {
@@ -1601,15 +1584,11 @@
             try {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString();
-                const statusElements = document.querySelectorAll('.save-status');
-                
-                statusElements.forEach(el => {
-                    if (el) {
-                        el.textContent = `最終保存: ${timeStr}`;
-                        setTimeout(() => {
-                            if (el) el.textContent = '';
-                        }, 3000);
-                    }
+                document.querySelectorAll('.save-status').forEach(el => {
+                    el.textContent = `最終保存: ${timeStr}`;
+                    setTimeout(() => {
+                        el.textContent = '';
+                    }, 3000);
                 });
             } catch (e) {
                 console.error("保存状態表示エラー:", e);
@@ -1724,7 +1703,7 @@
                                 const savedValue = productionData.lines[line].calendar[dateKey] || '';
                                 
                                 // 土日の場合、入力フィールドを表示しない
-                                if (j === 0 || j === 6) { // 0=日曜日, 6=土曜日
+                                if (j === 0 || j === 6) {
                                     dayElement.innerHTML = `<div class="date">${dayCount}</div>`;
                                     dayElement.classList.add('weekend');
                                 } else {
@@ -1847,55 +1826,6 @@
             }
         }
 
-        function addMinutes(time, minutes) {
-            try {
-                const [hours, mins] = time.split(':').map(Number);
-                const totalMinutes = hours * 60 + mins + minutes;
-                const newHours = Math.floor(totalMinutes / 60) % 24;
-                const newMins = totalMinutes % 60;
-                return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
-            } catch (e) {
-                console.error("分加算エラー:", e);
-                return "00:00";
-            }
-        }
-
-        function addSeconds(time, seconds) {
-            try {
-                const [hours, mins] = time.split(':').map(Number);
-                const totalSeconds = hours * 3600 + mins * 60 + seconds;
-                const newHours = Math.floor(totalSeconds / 3600) % 24;
-                const newMins = Math.floor((totalSeconds % 3600) / 60);
-                return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
-            } catch (e) {
-                console.error("秒加算エラー:", e);
-                return "00:00";
-            }
-        }
-
-        function isTimeBetween(time, start, end) {
-            try {
-                const timeSec = timeToSeconds(time);
-                const startSec = timeToSeconds(start);
-                const endSec = timeToSeconds(end);
-                return timeSec >= startSec && timeSec <= endSec;
-            } catch (e) {
-                console.error("時間比較エラー:", e);
-                return false;
-            }
-        }
-
-        function calculateOverlap(start1, end1, start2, end2) {
-            try {
-                const start = Math.max(timeToSeconds(start1), timeToSeconds(start2));
-                const end = Math.min(timeToSeconds(end1), timeToSeconds(end2));
-                return Math.max(0, end - start);
-            } catch (e) {
-                console.error("時間重複計算エラー:", e);
-                return 0;
-            }
-        }
-
         function formatDuration(seconds) {
             try {
                 const hours = Math.floor(seconds / 3600);
@@ -1934,10 +1864,7 @@
                 switchTab('main');
                 
                 // イベントリスナーの設定
-                document.getElementById('selectedLine').addEventListener('change', function() {
-                    updateLineData();
-                });
-                
+                document.getElementById('selectedLine').addEventListener('change', updateLineData);
                 document.getElementById('setCurrentTimeBtn').addEventListener('click', setCurrentTime);
                 document.getElementById('calculateBtn').addEventListener('click', calculateTime);
                 document.getElementById('saveAllDataBtn').addEventListener('click', saveAllData);

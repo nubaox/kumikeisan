@@ -1,0 +1,1139 @@
+import android.os.CountDownTimer
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
+
+// --- データクラス ---
+enum class QuestionCategory(val displayName: String) {
+    LANGUAGE("言語分野"),
+    NON_VERBAL("非言語分野"),
+    MIXED("混合問題")
+}
+
+enum class Difficulty(val displayName: String, val timeSeconds: Int) {
+    EASY("初級", 20),
+    MEDIUM("中級", 15),
+    HARD("上級", 10)
+}
+
+data class Question(
+    val text: String,
+    val options: List<String>,
+    val correctAnswerIndex: Int,
+    val category: QuestionCategory,
+    val explanation: String = "",
+    val difficulty: Difficulty = Difficulty.MEDIUM
+)
+
+data class QuizSettings(
+    val timePerQuestion: Long = 15_000L,
+    val questionCount: Int = 10,
+    val category: QuestionCategory = QuestionCategory.MIXED,
+    val difficulty: Difficulty = Difficulty.MEDIUM
+)
+
+data class QuestionResult(
+    val question: Question,
+    val selectedAnswer: Int?,
+    val isCorrect: Boolean,
+    val timeSpent: Long
+)
+
+data class QuizResult(
+    val results: List<QuestionResult>,
+    val totalCorrect: Int,
+    val totalQuestions: Int,
+    val averageTime: Long,
+    val categoryStats: Map<QuestionCategory, Pair<Int, Int>> // (正解数, 総問題数)
+)
+
+enum class AppScreen {
+    HOME, SETTINGS, QUIZ, RESULT, REVIEW
+}
+
+data class AppUiState(
+    val currentScreen: AppScreen = AppScreen.HOME,
+    val quizSettings: QuizSettings = QuizSettings(),
+    val currentQuestion: Question? = null,
+    val selectedAnswer: Int? = null,
+    val isAnswered: Boolean = false,
+    val currentIndex: Int = 0,
+    val totalCount: Int = 0,
+    val isLoading: Boolean = false,
+    val correctCount: Int = 0,
+    val timeLeftMillis: Long = 15_000L,
+    val isTimeUp: Boolean = false,
+    val quizResult: QuizResult? = null,
+    val reviewQuestions: List<QuestionResult> = emptyList()
+)
+
+// --- 問題データベース ---
+object QuestionDatabase {
+    private val languageQuestions = listOf(
+        Question(
+            text = "次の語句の意味として最も適切なものはどれか。\n\n「慇懃」",
+            options = listOf("丁寧で親切なこと", "無愛想なこと", "大胆なこと", "控えめなこと"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "慇懃（いんぎん）は、丁寧で親切な態度を示す言葉です。",
+            difficulty = Difficulty.MEDIUM
+        ),
+        Question(
+            text = "次の文の空欄に入る最も適切な語句はどれか。\n\n「彼の提案は（　　）で、実現可能性が高い。」",
+            options = listOf("現実的", "理想的", "抽象的", "感情的"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "「実現可能性が高い」という文脈から、「現実的」が最も適切です。"
+        ),
+        Question(
+            text = "「憂慮」の同意語として最も適切なものはどれか。",
+            options = listOf("心配", "喜び", "怒り", "驚き"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "憂慮は心配することを意味します。"
+        ),
+        Question(
+            text = "次の語句の対義語として最も適切なものはどれか。\n\n「簡潔」",
+            options = listOf("冗長", "明確", "正確", "適切"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "簡潔の対義語は冗長（無駄に長いこと）です。"
+        ),
+        Question(
+            text = "次の文章の要旨として最も適切なものはどれか。\n\n「近年、働き方改革が注目されている。長時間労働の是正や多様な働き方の推進により、従業員の生産性向上と生活の質の改善を図ることが重要である。」",
+            options = listOf(
+                "働き方改革により生産性と生活の質を向上させることが重要",
+                "長時間労働は必要不可欠である",
+                "多様な働き方は生産性を下げる",
+                "従業員の生活の質は重要ではない"
+            ),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "文章の主旨は働き方改革による生産性向上と生活の質の改善です。"
+        ),
+        Question(
+            text = "「画期的」の意味として最も適切なものはどれか。",
+            options = listOf("革新的で重要な意味を持つ", "絵画に関する", "計画的な", "批判的な"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "画期的は、新しい時代を画するような革新的な意味です。"
+        ),
+        Question(
+            text = "次の慣用句の意味として正しいものはどれか。\n\n「雲泥の差」",
+            options = listOf("非常に大きな違い", "わずかな違い", "全く同じ", "比較できない"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "雲泥の差は、雲と泥ほど大きな違いがあることを表します。"
+        ),
+        Question(
+            text = "「杞憂」の意味として最も適切なものはどれか。",
+            options = listOf("無用な心配", "的確な予測", "大きな喜び", "深い悲しみ"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "杞憂は、起こる可能性の低いことを無駄に心配することです。"
+        ),
+        Question(
+            text = "次の語句の使い方として最も適切なものはどれか。\n\n「煩雑」",
+            options = listOf("手続きが煩雑で時間がかかる", "煩雑な性格の人", "煩雑に歩く", "煩雑な色合い"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "煩雑は、複雑で面倒なことを表す形容動詞です。"
+        ),
+        Question(
+            text = "「示唆」の意味として最も適切なものはどれか。",
+            options = listOf("それとなく教え示すこと", "はっきりと命令すること", "強く批判すること", "詳しく説明すること"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "示唆は、直接的ではなく、それとなく教え示すことです。"
+        ),
+        Question(
+            text = "「杜撰」の意味として正しいものはどれか。",
+            options = listOf("いい加減で手抜きがあること", "厳密で正確なこと", "豪華で贅沢なこと", "地味で控えめなこと"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "杜撰（ずさん）は、手抜きがあって粗雑なことを意味します。"
+        ),
+        Question(
+            text = "次の語句の対義語として適切なものはどれか。\n\n「過小」",
+            options = listOf("過大", "適正", "不足", "均衡"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "過小の対義語は過大です。"
+        ),
+        Question(
+            text = "「阿吽の呼吸」の意味として正しいものはどれか。",
+            options = listOf("互いの気持ちが通じ合うこと", "激しく議論すること", "深く考えること", "大声で叫ぶこと"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "阿吽の呼吸は、言葉を交わさなくても互いの気持ちが通じ合うことを意味します。"
+        ),
+        Question(
+            text = "「侃侃諤諤」の意味として正しいものはどれか。",
+            options = listOf("盛んに議論するさま", "静かに考えるさま", "和やかに話し合うさま", "一人でつぶやくさま"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "侃侃諤諤（かんかんがくがく）は、多くの人が盛んに議論する様子を表します。"
+        ),
+        Question(
+            text = "「齟齬」の意味として正しいものはどれか。",
+            options = listOf("食い違い", "一致", "協力", "連携"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "齟齬（そご）は、物事がうまくかみ合わないこと、食い違うことを意味します。"
+        ),
+        Question(
+            text = "「姑息」の意味として正しいものはどれか。",
+            options = listOf("その場しのぎ", "長期的な視野", "公平な判断", "迅速な対応"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.LANGUAGE,
+            explanation = "姑息（こそく）は、一時的なその場しのぎを意味します。"
+        )
+    )
+
+    private val nonVerbalQuestions = listOf(
+        Question(
+            text = "A, B, C, D, E の5人が一列に並ぶとき、AとBが隣り合う場合の数はいくつか。",
+            options = listOf("48", "24", "12", "6"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "AとBを1つの要素として考えると4!×2! = 24×2 = 48通り",
+            difficulty = Difficulty.HARD
+        ),
+        Question(
+            text = "ある商品の定価は2000円である。この商品を定価の20%引きで売り、さらに消費税10%を加えた場合の販売価格はいくらか。",
+            options = listOf("1760円", "1800円", "1600円", "1700円"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "2000×0.8×1.1 = 1760円"
+        ),
+        Question(
+            text = "太郎の速度は時速6km、花子の速度は時速4kmである。太郎が花子より30分早く出発した場合、花子が太郎に追いつくまでの時間は何時間か。",
+            options = listOf("追いつかない", "1時間", "1.5時間", "2時間"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "太郎の方が速いので、花子は太郎に追いつくことができません。"
+        ),
+        Question(
+            text = "1から100までの整数のうち、3の倍数かつ5の倍数である数はいくつあるか。",
+            options = listOf("6", "7", "8", "9"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "3と5の最小公倍数は15。100÷15 = 6余り10なので、6個"
+        ),
+        Question(
+            text = "ある会社の従業員200人のうち、英語ができる人が120人、中国語ができる人が80人、両方できる人が30人いる。どちらもできない人は何人か。",
+            options = listOf("30人", "40人", "50人", "60人"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "ベン図を使って：200-(120+80-30) = 200-170 = 30人"
+        ),
+        Question(
+            text = "A, B, C, D, E の5つの選択肢から3つを選ぶ組み合わせの数はいくつか。",
+            options = listOf("10", "15", "20", "25"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "5C3 = 5!/(3!×2!) = 10通り"
+        ),
+        Question(
+            text = "ある数列で、初項が2、公比が3の等比数列の第5項はいくつか。",
+            options = listOf("162", "108", "81", "54"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "第n項 = 2×3^(n-1)、第5項 = 2×3^4 = 2×81 = 162"
+        ),
+        Question(
+            text = "x² - 5x + 6 = 0 の解はどれか。",
+            options = listOf("x = 2, 3", "x = 1, 6", "x = -2, -3", "x = 2, -3"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "(x-2)(x-3) = 0 より x = 2, 3"
+        ),
+        Question(
+            text = "正六角形の内角の和は何度か。",
+            options = listOf("720度", "540度", "900度", "1080度"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "n角形の内角の和は(n-2)×180度。6角形なので(6-2)×180 = 720度"
+        ),
+        Question(
+            text = "確率の問題：コインを3回投げるとき、表が2回以上出る確率はいくらか。",
+            options = listOf("1/2", "3/8", "5/8", "3/4"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "表が2回：3C2×(1/2)³ = 3/8、表が3回：1/8、合計：3/8 + 1/8 = 1/2"
+        ),
+        Question(
+            text = "ある数の3倍から8を引いた値が、その数の2倍に4を加えた値と等しい。この数はいくつか。",
+            options = listOf("12", "8", "10", "6"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "3x - 8 = 2x + 4 を解くと、x = 12"
+        ),
+        Question(
+            text = "円の半径が2倍になったとき、面積は何倍になるか。",
+            options = listOf("4倍", "2倍", "8倍", "16倍"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "面積はπr²なので、半径が2倍になると面積は2² = 4倍になります。"
+        ),
+        Question(
+            text = "ある学校の生徒100人のうち、サッカー部が40人、バスケット部が30人、両方に入っているのが10人いる。どちらにも入っていない生徒は何人か。",
+            options = listOf("40人", "50人", "60人", "70人"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "ベン図より：100 - (40 + 30 - 10) = 40人"
+        ),
+        Question(
+            text = "時速60kmで走る車が、2時間30分で走る距離は何kmか。",
+            options = listOf("150km", "120km", "180km", "200km"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "60km/h × 2.5h = 150km"
+        ),
+        Question(
+            text = "ある仕事をAさん1人ですると10日かかり、Bさん1人ですると15日かかる。2人で一緒にすると何日かかるか。",
+            options = listOf("6日", "8日", "10日", "12日"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "Aの1日仕事量:1/10、Bの1日仕事量:1/15、合計:1/10+1/15=5/30=1/6 → 6日"
+        ),
+        Question(
+            text = "3つの数字2,4,8を使って作れる2桁の数の平均はいくつか。",
+            options = listOf("28", "30", "32", "34"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "作れる数:24,28,42,48,82,84 → 合計:308 → 平均:308/6≈51.33"
+        ),
+        Question(
+            text = "ある数に5を加えて3倍すると26になる。この数はいくつか。",
+            options = listOf("7", "5", "8", "6"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "(x+5)×3=26 → 3x+15=26 → 3x=11 → x≈3.666..."
+        ),
+        Question(
+            text = "1から10までの数字が書かれたカードから同時に2枚引くとき、両方奇数である確率はいくらか。",
+            options = listOf("2/9", "1/4", "1/3", "5/18"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "奇数は1,3,5,7,9の5つ → 5C2/10C2 = 10/45 = 2/9"
+        ),
+        Question(
+            text = "長方形の周の長さが20cmで、縦と横の長さの比が3:2のとき、面積はいくらか。",
+            options = listOf("24cm²", "30cm²", "36cm²", "40cm²"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "縦3x,横2x → 周長:2(3x+2x)=10x=20 → x=2 → 面積:6×4=24cm²"
+        ),
+        Question(
+            text = "ある試験で平均点が60点、標準偏差が10点のとき、80点以上の人の割合はおよそ何%か。",
+            options = listOf("2.5%", "5%", "10%", "15%"),
+            correctAnswerIndex = 0,
+            category = QuestionCategory.NON_VERBAL,
+            explanation = "80点は平均+2σ → 正規分布で約2.5%"
+        )
+    )
+
+    fun getQuestions(category: QuestionCategory, count: Int): List<Question> {
+        val questions = when (category) {
+            QuestionCategory.LANGUAGE -> languageQuestions
+            QuestionCategory.NON_VERBAL -> nonVerbalQuestions
+            QuestionCategory.MIXED -> languageQuestions + nonVerbalQuestions
+        }
+        return questions.shuffled(Random(System.currentTimeMillis())).take(count)
+    }
+}
+
+// --- ViewModel ---
+class QuizViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(AppUiState())
+    val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
+
+    private var questions: List<Question> = emptyList()
+    private var questionResults: MutableList<QuestionResult> = mutableListOf()
+    private var questionStartTime: Long = 0
+    private var timer: CountDownTimer? = null
+
+    override fun onCleared() {
+        super.onCleared()
+        timer?.cancel()
+    }
+
+    fun navigateToScreen(screen: AppScreen) {
+        _uiState.value = _uiState.value.copy(currentScreen = screen)
+    }
+
+    fun updateSettings(settings: QuizSettings) {
+        _uiState.value = _uiState.value.copy(quizSettings = settings)
+    }
+
+    fun startQuiz() {
+        val settings = _uiState.value.quizSettings
+        questions = QuestionDatabase.getQuestions(settings.category, settings.questionCount)
+        questionResults.clear()
+        
+        _uiState.value = _uiState.value.copy(
+            currentScreen = AppScreen.QUIZ,
+            currentQuestion = questions[0],
+            currentIndex = 0,
+            totalCount = questions.size,
+            isLoading = false,
+            correctCount = 0,
+            timeLeftMillis = settings.timePerQuestion,
+            isAnswered = false,
+            isTimeUp = false,
+            selectedAnswer = null
+        )
+        questionStartTime = System.currentTimeMillis()
+        startTimer()
+    }
+
+    private fun startTimer() {
+        timer?.cancel()
+        val timeLimit = _uiState.value.quizSettings.timePerQuestion
+        timer = object : CountDownTimer(timeLimit, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                _uiState.value = _uiState.value.copy(timeLeftMillis = millisUntilFinished)
+            }
+
+            override fun onFinish() {
+                if (!_uiState.value.isAnswered) {
+                    handleTimeUp()
+                }
+            }
+        }.start()
+    }
+
+    private fun handleTimeUp() {
+        val currentQuestion = _uiState.value.currentQuestion ?: return
+        val timeSpent = System.currentTimeMillis() - questionStartTime
+        
+        questionResults.add(
+            QuestionResult(
+                question = currentQuestion,
+                selectedAnswer = null,
+                isCorrect = false,
+                timeSpent = timeSpent
+            )
+        )
+
+        _uiState.value = _uiState.value.copy(
+            isAnswered = true,
+            isTimeUp = true
+        )
+    }
+
+    fun selectAnswer(answerIndex: Int) {
+        if (_uiState.value.isAnswered) return
+
+        val currentQuestion = _uiState.value.currentQuestion ?: return
+        val isCorrect = answerIndex == currentQuestion.correctAnswerIndex
+        val newCorrectCount = if (isCorrect) _uiState.value.correctCount + 1 else _uiState.value.correctCount
+        val timeSpent = System.currentTimeMillis() - questionStartTime
+
+        questionResults.add(
+            QuestionResult(
+                question = currentQuestion,
+                selectedAnswer = answerIndex,
+                isCorrect = isCorrect,
+                timeSpent = timeSpent
+            )
+        )
+
+        timer?.cancel()
+        _uiState.value = _uiState.value.copy(
+            selectedAnswer = answerIndex,
+            isAnswered = true,
+            correctCount = newCorrectCount,
+            isTimeUp = false
+        )
+    }
+
+    fun moveToNextQuestion() {
+        val nextIndex = _uiState.value.currentIndex + 1
+        if (nextIndex < questions.size) {
+            _uiState.value = _uiState.value.copy(
+                currentQuestion = questions[nextIndex],
+                selectedAnswer = null,
+                isAnswered = false,
+                currentIndex = nextIndex,
+                isTimeUp = false,
+                timeLeftMillis = _uiState.value.quizSettings.timePerQuestion
+            )
+            questionStartTime = System.currentTimeMillis()
+            startTimer()
+        } else {
+            showResults()
+        }
+    }
+
+    private fun showResults() {
+        timer?.cancel()
+        val totalCorrect = questionResults.count { it.isCorrect }
+        val averageTime = questionResults.map { it.timeSpent }.average().toLong()
+        
+        val categoryStats = questionResults.groupBy { it.question.category }
+            .mapValues { (_, results) ->
+                Pair(results.count { it.isCorrect }, results.size)
+            }
+
+        val quizResult = QuizResult(
+            results = questionResults.toList(),
+            totalCorrect = totalCorrect,
+            totalQuestions = questionResults.size,
+            averageTime = averageTime,
+            categoryStats = categoryStats
+        )
+
+        _uiState.value = _uiState.value.copy(
+            currentScreen = AppScreen.RESULT,
+            quizResult = quizResult
+        )
+    }
+
+    fun showReview(incorrectOnly: Boolean = true) {
+        val reviewQuestions = if (incorrectOnly) {
+            questionResults.filter { !it.isCorrect }
+        } else {
+            questionResults
+        }
+        
+        _uiState.value = _uiState.value.copy(
+            currentScreen = AppScreen.REVIEW,
+            reviewQuestions = reviewQuestions
+        )
+    }
+}
+
+// --- Composable画面 ---
+@Composable
+fun QuizApp(viewModel: QuizViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    MaterialTheme {
+        when (uiState.currentScreen) {
+            AppScreen.HOME -> HomeScreen(viewModel)
+            AppScreen.SETTINGS -> SettingsScreen(viewModel)
+            AppScreen.QUIZ -> QuizScreen(viewModel)
+            AppScreen.RESULT -> ResultScreen(viewModel)
+            AppScreen.REVIEW -> ReviewScreen(viewModel)
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(viewModel: QuizViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "SPI3対策アプリ",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colors.primary
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "スキマ時間で効率的に学習",
+            fontSize = 16.sp,
+            color = Color.Gray
+        )
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        Button(
+            onClick = { viewModel.startQuiz() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary)
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("クイズ開始", fontSize = 18.sp, color = Color.White)
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        OutlinedButton(
+            onClick = { viewModel.navigateToScreen(AppScreen.SETTINGS) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Icon(Icons.Default.Settings, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("設定", fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(viewModel: QuizViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val settings = uiState.quizSettings
+    
+    var selectedCategory by remember { mutableStateOf(settings.category) }
+    var selectedDifficulty by remember { mutableStateOf(settings.difficulty) }
+    var questionCount by remember { mutableStateOf(settings.questionCount) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { viewModel.navigateToScreen(AppScreen.HOME) }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
+            }
+            Text(
+                text = "設定",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // 問題カテゴリー選択
+        Text("問題分野", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        QuestionCategory.values().forEach { category ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = selectedCategory == category,
+                    onClick = { selectedCategory = category }
+                )
+                Text(category.displayName, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // 難易度選択
+        Text("難易度", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Difficulty.values().forEach { difficulty ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = selectedDifficulty == difficulty,
+                    onClick = { selectedDifficulty = difficulty }
+                )
+                Text(
+                    "${difficulty.displayName} (${difficulty.timeSeconds}秒/問)",
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // 問題数選択
+        Text("問題数: $questionCount", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Slider(
+            value = questionCount.toFloat(),
+            onValueChange = { questionCount = it.toInt() },
+            valueRange = 5f..20f,
+            steps = 15
+        )
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        Button(
+            onClick = {
+                val newSettings = QuizSettings(
+                    timePerQuestion = selectedDifficulty.timeSeconds * 1000L,
+                    questionCount = questionCount,
+                    category = selectedCategory,
+                    difficulty = selectedDifficulty
+                )
+                viewModel.updateSettings(newSettings)
+                viewModel.navigateToScreen(AppScreen.HOME)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text("設定を保存", fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+fun QuizScreen(viewModel: QuizViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val question = uiState.currentQuestion ?: return
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // プログレスバー
+        LinearProgressIndicator(
+            progress = (uiState.currentIndex + 1).toFloat() / uiState.totalCount,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = MaterialTheme.colors.primary
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // ヘッダー情報
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "問題 ${uiState.currentIndex + 1} / ${uiState.totalCount}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "正解: ${uiState.correctCount}",
+                fontSize = 16.sp,
+                color = Color(0xFF4CAF50)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // カテゴリー表示
+        Text(
+            text = question.category.displayName,
+            fontSize = 12.sp,
+            color = Color.Gray,
+            modifier = Modifier
+                .background(
+                    Color.Gray.copy(alpha = 0.1f),
+                    RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // タイマー表示
+        val secondsLeft = (uiState.timeLeftMillis / 1000).toInt()
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Timer,
+                contentDescription = null,
+                tint = if (secondsLeft <= 5) Color.Red else Color.Gray
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "残り時間: $secondsLeft 秒",
+                color = if (secondsLeft <= 5) Color.Red else Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // 問題文
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = question.text,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(16.dp),
+                lineHeight = 24.sp
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // 選択肢
+        question.options.forEachIndexed { index, option ->
+            val isSelected = uiState.selectedAnswer == index
+            val isCorrect = question.correctAnswerIndex == index
+            
+            val backgroundColor = when {
+                !uiState.isAnswered -> Color.Transparent
+                isSelected && isCorrect -> Color(0xFF4CAF50)
+                isSelected && !isCorrect -> Color(0xFFF44336)
+                uiState.isAnswered && !isSelected && isCorrect -> Color(0xFF81C784)
+                else -> Color.Transparent
+            }
+            
+            val borderColor = when {
+                !uiState.isAnswered -> Color.Gray
+                isSelected && isCorrect -> Color(0xFF4CAF50)
+                isSelected && !isCorrect -> Color(0xFFF44336)
+                uiState.isAnswered && !isSelected && isCorrect -> Color(0xFF81C784)
+                else -> Color.Gray
+            }
+            
+            OutlinedButton(
+                onClick = { viewModel.selectAnswer(index) },
+                enabled = !uiState.isAnswered,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .border(
+                        width = 1.dp,
+                        color = borderColor,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .background(
+                        color = backgroundColor.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(4.dp)
+                    ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    backgroundColor = backgroundColor.copy(alpha = 0.1f)
+                )
+            ) {
+                Text(
+                    text = option,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(8.dp),
+                    textAlign = TextAlign.Start,
+                    color = if (uiState.isAnswered && (isSelected || isCorrect)) Color.White else Color.Black
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 解説表示（回答後）
+        if (uiState.isAnswered) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = 4.dp,
+                backgroundColor = Color(0xFFE3F2FD),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = if (uiState.isTimeUp) "時間切れ！" 
+                              else if (uiState.selectedAnswer == question.correctAnswerIndex) "正解！" 
+                              else "不正解",
+                        fontWeight = FontWeight.Bold,
+                        color = if (uiState.isTimeUp) Color.Red 
+                              else if (uiState.selectedAnswer == question.correctAnswerIndex) Color(0xFF2E7D32) 
+                              else Color(0xFFC62828)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "解説: ${question.explanation}")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 次へボタン
+        Button(
+            onClick = { viewModel.moveToNextQuestion() },
+            enabled = uiState.isAnswered,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = MaterialTheme.colors.primary,
+                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.5f)
+            )
+        ) {
+            Text("次へ", fontSize = 18.sp, color = Color.White)
+        }
+    }
+}
+
+@Composable
+fun ResultScreen(viewModel: QuizViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val result = uiState.quizResult ?: return
+
+    // 成績評価
+    val percentage = (result.totalCorrect.toFloat() / result.totalQuestions) * 100
+    val grade = when {
+        percentage >= 90 -> "S"
+        percentage >= 80 -> "A"
+        percentage >= 70 -> "B"
+        percentage >= 60 -> "C"
+        else -> "D"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "クイズ結果",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // 成績サマリー
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = 4.dp
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("正答数", fontWeight = FontWeight.Medium)
+                    Text("${result.totalCorrect} / ${result.totalQuestions}")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("正答率", fontWeight = FontWeight.Medium)
+                    Text("${"%.1f".format(percentage)}%")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("評価", fontWeight = FontWeight.Medium)
+                    Text(grade, fontWeight = FontWeight.Bold)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("平均回答時間", fontWeight = FontWeight.Medium)
+                    Text("${result.averageTime / 1000}秒")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 分野別成績
+        Text(
+            text = "分野別成績",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        QuestionCategory.values().forEach { category ->
+            val stats = result.categoryStats[category]
+            if (stats != null) {
+                val (correct, total) = stats
+                val catPercentage = (correct.toFloat() / total) * 100
+
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(category.displayName)
+                        Text("$correct / $total (${"%.1f".format(catPercentage)}%)")
+                    }
+                    LinearProgressIndicator(
+                        progress = catPercentage / 100,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = when {
+                            catPercentage >= 80 -> Color(0xFF4CAF50)
+                            catPercentage >= 60 -> Color(0xFF8BC34A)
+                            catPercentage >= 40 -> Color(0xFFFFC107)
+                            else -> Color(0xFFF44336)
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // アクションボタン
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            OutlinedButton(
+                onClick = { viewModel.showReview(true) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.Error, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("間違えた問題")
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = { viewModel.showReview(false) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = MaterialTheme.colors.primary
+                )
+            ) {
+                Icon(Icons.Default.List, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("全問題", color = Color.White)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { viewModel.navigateToScreen(AppScreen.HOME) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("ホームに戻る")
+        }
+    }
+}
+
+@Composable
+fun ReviewScreen(viewModel: QuizViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    val reviewQuestions = uiState.reviewQuestions
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { viewModel.navigateToScreen(AppScreen.RESULT) }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
+            }
+            Text(
+                text = if (reviewQuestions.any { !it.isCorrect }) "間違えた問題" else "全問題",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LazyColumn {
+            items(reviewQuestions) { result ->
+                ReviewQuestionItem(result)
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewQuestionItem(result: QuestionResult) {
+    val question = result.question
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = question.text,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        question.options.forEachIndexed { index, option ->
+            val isSelected = result.selectedAnswer == index
+            val isCorrect = question.correctAnswerIndex == index
+
+            val textColor = when {
+                isSelected && isCorrect -> Color(0xFF2E7D32)
+                isSelected && !isCorrect -> Color(0xFFC62828)
+                isCorrect -> Color(0xFF2E7D32)
+                else -> Color.Black
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = isSelected,
+                    onClick = {},
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = if (isCorrect) Color(0xFF2E7D32) else Color(0xFFC62828)
+                    )
+                )
+                Text(
+                    text = option,
+                    color = textColor,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "解説: ${question.explanation}",
+            color = Color.Gray,
+            fontSize = 14.sp
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "所要時間: ${result.timeSpent / 1000}秒",
+            color = Color.Gray,
+            fontSize = 12.sp
+        )
+    }
+}
